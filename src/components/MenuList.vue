@@ -6,6 +6,7 @@
       <div class="sidebar-header">
         <img src="/images/svg-gobbler 1.png" alt="Logo" class="logo">
         <img src="/images/menu_open_24dp_FILL0_wght400_GRAD0_opsz24 1.png" alt="Logo" class="nav">
+        <img src="/images/menu.png" alt="Logo" class="mobile">
       </div>
 
       <ul>
@@ -74,7 +75,7 @@
       <div class="menu-list">
         <div class="header">
           <img src="/images/Icon.png" alt="Folder Icon" class="icon" />
-          <h3><span class="slash-text">/ </span> Menus</h3>
+          <h3 class="new-text"><span class="slash-text">/ </span> Menus</h3>
           <div class="buttons">
             
           </div>
@@ -82,7 +83,7 @@
 
         <div class="header">
           <img src="/images/icon-title.png" alt="Folder Icon" class="headericon" />
-          <h2><span class="slash-text"></span><b>Menus</b></h2>
+          <h2 class="mobile"><span class="slash-text"></span><b>Menus</b></h2>
           <div class="buttons">
             
           </div>
@@ -254,6 +255,9 @@ export default {
 
 .sidebar ul li a img{
  padding-right: 15px
+}
+.sidebar .sidebar-header .mobile{
+  display: none;
 }
 
 /* Hover effect */
@@ -635,7 +639,7 @@ input[type="text"]:disabled {
   .menu-tree .buttons .expand-button,
   .menu-tree .buttons .collapse-button {
     font-size: 12px;
-    padding: 5px 10px;
+    padding: 7px 20px;
   }
 
   .form-group input {
@@ -644,7 +648,37 @@ input[type="text"]:disabled {
 
   button[type="submit"] {
     font-size: 14px;
+    padding: 13px 40px;
   }
+}
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px; /* Shrinks the sidebar on smaller screens */
+    background: white;
+  }
+  .sidebar ul li a .link-text {
+    display: none; /* Hides the text, keeping only icons visible */
+  }
+  .sidebar .sidebar-header .logo{
+    display: none;
+  }
+  .sidebar .sidebar-header .nav{
+    display: none;
+  }
+  .sidebar .sidebar-header .mobile{
+    display: block;
+  }
+  .main-content .header .headericon{
+    display: none;
+  }
+  .main-content .menu-list .header .new-text{
+    margin: -11px 0px 5px 30px;
+  }
+  .main-content .header .mobile{
+    display: none;
+  }
+
+
 }
 </style>
 
