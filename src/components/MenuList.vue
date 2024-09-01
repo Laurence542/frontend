@@ -106,47 +106,124 @@
 
             <ul v-show="isMenuVisible">
 
-              <li>Systems</li>
-              <li>Properties</li>
-              <li>Menus</li>
+              <li v-for="item in hierarchicalMenuItems" :key="item.id">
+              {{ item.name }}
+              <button @click="editItem(item)">Edit</button>
+              <button @click="confirmDelete(item.id)">Delete</button>
+              <ul v-if="item.children.length">
+                <li v-for="child in item.children" :key="child.id">
+                  {{ child.name }}
+                  <button @click="editItem(child)">Edit</button>
+                  <button @click="confirmDelete(child.id)">Delete</button>
+                  <ul v-if="child.children.length">
+                    <li v-for="grandchild in child.children" :key="grandchild.id">
+                      {{ grandchild.name }}
+                      <button @click="editItem(grandchild)">Edit</button>
+                      <button @click="confirmDelete(grandchild.id)">Delete</button>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
           
             </ul>
           </li>
           <!-- Add more menus here as needed -->
         </ul>
+        
+
+        <div v-if="editMenuItem">
+      <h2>Edit Menu Item</h2>
+      <form @submit.prevent="updateItem">
+        <label for="edit-menu">Menu:</label>
+        <select v-model="editMenuItem.menu" required>
+          <option v-for="menu in menus" :key="menu.id" :value="menu.id">
+            {{ menu.name }}
+          </option>
+        </select>
+        <br />
+
+        <label for="edit-name">Item Name:</label>
+        <input v-model="editMenuItem.name" type="text" required />
+        <br />
+
+        <label for="edit-parent">Parent Item (optional):</label>
+        <select v-model="editMenuItem.parent">
+          <option value="">None</option>
+          <option v-for="item in menuItems" :key="item.id" :value="item.id">
+            {{ item.name }}
+          </option>
+        </select>
+        <br />
+
+        <button type="submit">Update Menu Item</button>
+      </form>
+    </div>
+
+
       </div>
 
       <!-- Menu Details -->
       <div class="menu-details">
-        <form @submit.prevent="saveDetails">
+        <form @submit.prevent="submitMenuItem">
+
           <div class="form-group">
             <label>Menu ID</label>
             <input type="text" v-model="menuDetails.menuId" readonly />
           </div>
+
           <div class="form-group">
             <label>Depth</label>
-            <input type="number" v-model="menuDetails.depth" />
+            <select v-model="newMenuItem.menu" required>
+        <option v-for="menu in menus" :key="menu.id" :value="menu.id">
+          {{ menu.name }}
+        </option>
+      </select>
           </div>
+
           <div class="form-group">
             <label>Parent Data</label>
-            <input type="text" v-model="menuDetails.parentData" readonly />
+            <input v-model="newMenuItem.name" type="text" required />
           </div>
+
           <div class="form-group">
             <label>Name</label>
-            <input type="text" v-model="menuDetails.name" />
+            <select v-model="newMenuItem.parent">
+            <option value="">None</option>
+            <option v-for="item in menuItems" :key="item.id" :value="item.id">
+              {{ item.name }}
+            </option>
+            </select>
           </div>
+
           <button type="submit">Save</button>
+
         </form>
       </div>
+
+
+
     </div>
+    
   </div>
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex';
+
 export default {
   name: "MenuList",
   data() {
     return {
+      // Data from the first script
+      newMenuItem: {
+        menu: '',
+        name: '',
+        parent: ''
+      },
+      editMenuItem: null, // Holds the item being edited
+
+      // Data from the second script
       isMenuVisible: true,
       menuDetails: {
         menuId: "5c320e9-4ef5-11ed-a7ba-f220af5eda49",
@@ -156,7 +233,66 @@ export default {
       },
     };
   },
+  computed: {
+    ...mapState(['menus', 'menuItems']),
+    hierarchicalMenuItems() {
+      const buildHierarchy = (items) => {
+        const itemMap = new Map(items.map(item => [item.id, { ...item, children: [] }]));
+
+        let roots = [];
+        itemMap.forEach(item => {
+          if (item.parent) {
+            const parentItem = itemMap.get(item.parent);
+            if (parentItem) {
+              parentItem.children.push(item);
+            }
+          } else {
+            roots.push(item);
+          }
+        });
+
+        return roots;
+      };
+
+      return buildHierarchy(this.menuItems);
+    }
+  },
   methods: {
+    // Methods from the first script
+    ...mapActions(['fetchMenus', 'fetchMenuItems', 'addMenuItem', 'updateMenuItem', 'deleteMenuItem']),
+    submitMenuItem() {
+      this.addMenuItem(this.newMenuItem).then(() => {
+        this.newMenuItem = { menu: '', name: '', parent: '' };
+      });
+    },
+    editItem(item) {
+      this.editMenuItem = { ...item }; // Create a new object to avoid reactivity issues
+    },
+    updateItem() {
+      if (this.editMenuItem) {
+        this.updateMenuItem({ id: this.editMenuItem.id, data: this.editMenuItem }).then(() => {
+          this.editMenuItem = null; // Clear edit item after updating
+        }).catch(error => {
+          console.error('Error updating menu item:', error);
+        });
+      }
+    },
+    confirmDelete(itemId) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        console.log(`Attempting to delete item with ID: ${itemId}`);
+        this.deleteMenuItem(itemId)
+          .then(() => {
+            console.log(`Successfully deleted item with ID: ${itemId}`);
+            // Refresh the menu items after deletion
+            this.fetchMenuItems();
+          })
+          .catch(error => {
+            console.error('Error deleting menu item:', error);
+          });
+      }
+    },
+
+    // Methods from the second script
     toggleMenu() {
       this.isMenuVisible = !this.isMenuVisible;
     },
@@ -171,8 +307,14 @@ export default {
       console.log(this.menuDetails);
     },
   },
+  created() {
+    // Lifecycle hook from the first script
+    this.fetchMenus();
+    this.fetchMenuItems();
+  },
 };
 </script>
+
 
 <style scoped>
 
@@ -385,7 +527,6 @@ export default {
 }
 
 .menu-tree li {
-  padding: 10px 0;
   cursor: pointer;
   color: #333;
 }
@@ -424,7 +565,7 @@ export default {
   color: #475467;
 }
 
-.form-group input {
+.form-group select {
   width: 100%;
   padding: 14px;
   box-sizing: border-box;
